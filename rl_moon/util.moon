@@ -1,3 +1,4 @@
+export JSON = require "rl_moon/external/json"
 ----------------------------------
 -- Gaus randomness
 ----------------------------------
@@ -70,6 +71,62 @@ class Matrix
       @w[@d * q + i] = m.w[i]
     @
 
+  serialize: =>
+    t = {
+      "n": @n
+      "d": @d
+      "w": @w
+    }
+    t
+
+  deserialize: (t) =>
+    @n = t.n
+    @d = t.d
+    @w  = zeros @n * @d
+    @dw = zeros @n * @d
+
+    for i = 1, @n * @d
+      @w[i] = t.w[i]
+
+    @
+----------------------------------
+-- Network utilities
+----------------------------------
+copy_mat = (b) ->
+  a = Mat b.n, b.d
+  a\set_from b.w
+  a
+
+copy_net = (n) ->
+  new_n = {}
+  for k, v in pairs n
+    new_n[k] = copy_mat v
+  new_n
+
+update_mat = (m, alpha) ->
+  for i = 1, m.n * m.d
+    if m.dw[i] != 0
+      m.w[i] +=  -alpha * m.dw[i]
+      m.dw[i] = 0
+
+update_net = (n, alpha) ->
+  new_n = {}
+  for k, v in pairs n
+    update_mat v, alpha
+
+serialize_net: (n) ->
+  j = {}
+  for k, v in pairs n
+    j[k] = v\serialize!
+  j
+
+deserialize_net: (j) ->
+  n = {}
+  for k, v in pairs j
+    n[k] = Mat 1, 1
+    n[k]\deserialize v
+  n
+
 {
   :gauss_random
   :randf
@@ -77,4 +134,12 @@ class Matrix
   :randn
   ----------------------------------
   :Matrix
+  ----------------------------------
+  :copy_mat
+  :copy_net
+  ----------------------------------
+  :update_mat
+  :update_net
+  ----------------------------------
+  :serialize_net
 }
